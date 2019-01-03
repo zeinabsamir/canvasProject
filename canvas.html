@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title></title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      #toolbar {
+        background-color: grey;
+        height: 40px;
+        padding-top: 20px;
+        user-select: none;
+        position: fixed;
+        top: 0;
+        width: 100%;
+      }
+      span {
+        padding: 10px 20px;
+        font-size: 20px;
+      }
+      .incdec {
+        background-color: rgb(26, 8, 124);
+        border-radius: 50px;
+      }
+      .incdec:hover {
+        background-color: rgb(23, 152, 161);
+        cursor: pointer;
+      }
+      .active {
+        border: 2px solid white;
+      }
+      .colors {
+        border-radius: 50px;
+        margin: 5px;
+      }
+      .colors:hover {
+        cursor: pointer;
+      }
+      .shape {
+        border-radius: 50px;
+        margin: 5px;
+      }
+      .shape:hover {
+        cursor: pointer;
+      }
+      .activeShape {
+        border: 2px solid white;
+      }
+    </style>
+    <script>
+      function inc() {
+        counter++;
+        radiusVal.innerText = counter;
+      }
+      function dec() {
+        counter--;
+        if (counter < 10) counter = 10;
+        radiusVal.innerText = counter;
+      }
+      isdrawable = false;
+      function drawCircle(e) {
+        if (isdrawable) {
+          context.beginPath();
+          context.arc(e.clientX, e.clientY, counter, 0, 2 * Math.PI);
+          context.fillStyle = localStorage.getItem("color");
+          context.fill();
+          context.closePath();
+        } else {
+          e.preventDefault();
+        }
+      }
+      function drawSquare(e) {
+        if (isdrawable) {
+          context.beginPath();
+          context.fillRect(e.clientX, e.clientY, counter, counter);
+          context.fillStyle = localStorage.getItem("color");
+          context.fill();
+          context.closePath();
+        } else {
+          e.preventDefault();
+        }
+      }
+      function enableDraw() {
+        isdrawable = true;
+      }
+      function disableDraw() {
+        isdrawable = false;
+      }
+      clicked = -1;
+      function changeColor(data) {
+        // alert('hi');
+
+        console.log(data.target);
+        newClicked = data.target;
+        oldOne = document.getElementsByClassName("active")[0];
+        if (clicked == 1) {
+          oldOne.className = "colors";
+        }
+
+        newClicked.className += " active";
+        context.fillStyle = newClicked.style.backgroundColor;
+        localStorage.setItem("color", newClicked.style.backgroundColor);
+      }
+
+      function downloadURI(uri, name) {
+        var link = document.createElement("a");
+        link.download = name;
+        link.href = uri;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        delete link;
+      }
+
+      window.addEventListener("load", function() {
+        toolbar = document.getElementById("toolbar");
+        squareShape = document.getElementById("square");
+        circleShape = document.getElementById("circle");
+        clearbtns = document.getElementById("clear");
+        saveBtn = document.getElementById("save");
+
+        counter = 10;
+        downEnabled = false;
+        radiusVal = document.getElementById("radiusVal");
+
+        mycanvas = document.getElementById("mycanvas");
+        context = mycanvas.getContext("2d");
+
+        mycanvas.width = window.innerWidth;
+        mycanvas.height = window.innerHeight;
+
+        mycanvas.addEventListener("mousedown", enableDraw);
+        mycanvas.addEventListener("mouseup", disableDraw);
+
+        squareShape.onclick = function() {
+          mycanvas.removeEventListener("mousemove", drawCircle);
+          mycanvas.addEventListener("mousemove", drawSquare);
+          squareShape.className += " activeShape";
+          circleShape.className = "shape";
+        };
+        circleShape.onclick = function() {
+          mycanvas.removeEventListener("mousemove", drawSquare);
+          mycanvas.addEventListener("mousemove", drawCircle);
+          circleShape.className += " activeShape";
+          squareShape.className = "shape";
+        };
+
+        allColors = document.querySelectorAll(".colors");
+        for (var i = 0; i < allColors.length; i++) {
+          allColors[i].addEventListener("click", changeColor);
+        }
+
+        var colors = ["red", "blue", "yellow", "pink", "purple"];
+        for (var i = 0; i < colors.length; i++) {
+          var span = document.createElement("span");
+          span.className = "colors";
+          span.style.backgroundColor = colors[i];
+          if (localStorage.getItem("color") == colors[i]) {
+            span.className += " active";
+            clicked = 1;
+          }
+
+          span.addEventListener("click", changeColor);
+          toolbar.appendChild(span);
+        }
+        // clear canavas
+        clearbtns.addEventListener("click", function() {
+          context.clearRect(0, 0, mycanvas.width, mycanvas.height);
+        });
+        // save canvas
+        saveBtn.addEventListener("click", function() {
+          dataURL = mycanvas.toDataURL("image/png", 1.0);
+          console.log(dataURL);
+
+          window.open(dataURL, "_blank");
+
+          downloadURI(dataURL, "stage.png");
+        });
+      }); //load
+    </script>
+  </head>
+  <body style="padding:0;margin:0;">
+    <div id="toolbar">
+      <span style="color:white">radius: </span>
+      <span style="color:white" id="radiusVal">10</span>
+      <span style="color:white" class="incdec" onclick="inc()">+</span>
+      <span style="color:white" class="incdec" onclick="dec()">-</span>
+      <span style="color:white"></span>
+      <span class="incdec" id="save" style="color:white">save</span>
+      <span class="incdec" style="color:white" id="clear"> clear </span>
+      <span style="color:white">choose shape: </span>
+      <span
+        style="color:white;background-color: black"
+        class="shape"
+        id="circle"
+      >
+        circle
+      </span>
+      <span
+        style="color:white; background-color:black"
+        class="shape"
+        id="square"
+      >
+        square
+      </span>
+
+      <span>colors:</span>
+    </div>
+    <canvas id="mycanvas" style="display:block;margin:0;padding:0;"
+      >Sorry canvas is not supported at you!</canvas
+    >
+  </body>
+</html>
